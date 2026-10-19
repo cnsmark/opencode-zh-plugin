@@ -8,6 +8,8 @@
 
 OpenCode 中文增强插件 — 通过官方 Plugin + Skill 机制实现 AI 回复中文化与 TUI 界面汉化。
 
+**同时支持 OpenCode v1（1.x）与 v2（2.x）**：同一个 npm 包，自动适配两代 Plugin API。
+
 **配套工具**：[opencode-zh-desktop](https://www.npmjs.com/package/opencode-zh-desktop) — 基于 CDP 的 Desktop 界面注入汉化。
 
 [English](./README.en.md)
@@ -15,41 +17,43 @@ OpenCode 中文增强插件 — 通过官方 Plugin + Skill 机制实现 AI 回�
 ## 工作原理
 
 ```
-┌─────────────────────────────────────────────────┐
-│              opencode-zh-plugin 架构              │
-├─────────────────────────────────────────────────┤
-│                                                  │
-│  Server Plugin (./server)                        │
-│  ┌──────────────────────────────────────────┐   │
-│  │ experimental.chat.system.transform       │   │
-│  │   → 注入 <language_directive> 到 system   │   │
-│  │   → AI 全部输出（think/response）切换为中文 │   │
-│  └──────────────────────────────────────────┘   │
-│                                                  │
-│  TUI Plugin (./tui)                              │
-│  ┌──────────────────────────────────────────┐   │
-│  │ api.slots.register()                     │   │
-│  │   → home_logo:   中文欢迎语               │   │
-│  │   → home_footer: 中文帮助提示             │   │
-│  │   → home_bottom: 中文使用提示             │   │
-│  │   → sidebar_title: 中文"会话"标题         │   │
-│  ├──────────────────────────────────────────┤   │
-│  │ api.command.register()                   │   │
-│  │   → /zh        启用中文模式               │   │
-│  │   → /zh-off    关闭中文模式               │   │
-│  │   → /zh-cn     切换简体中文               │   │
-│  │   → /zh-tw     切换繁體中文               │   │
-│  │   → /zh-status  查看语言设置              │   │
-│  └──────────────────────────────────────────┘   │
-│                                                  │
-│  Skill (skills/chinese-locale/SKILL.md)          │
-│  ┌──────────────────────────────────────────┐   │
-│  │ 中文交互规范（标点、术语、注释语言等）     │   │
-│  │ 安装到 ~/.config/opencode/skills/ 后       │   │
-│  │ agent 可按需加载作为行为参考              │   │
-│  └──────────────────────────────────────────┘   │
-│                                                  │
-└─────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────┐
+│               opencode-zh-plugin 架构                  │
+├───────────────────────────────────────────────────────┤
+│                                                        │
+│  Server Plugin                                         │
+│  ┌─────────────────────────────────────────────────┐  │
+│  │ v1  ./server  experimental.chat.system.transform │  │
+│  │ v2  .         session.hook("context" /           │  │
+│  │               "compaction"/"generate"/"title")   │  │
+│  │   → 注入 <language_directive> 到 system prompt    │  │
+│  │   → AI 全部输出（think/response）切换为中文        │  │
+│  └─────────────────────────────────────────────────┘  │
+│                                                        │
+│  TUI Plugin (./tui)                                    │
+│  ┌─────────────────────────────────────────────────┐  │
+│  │ v1  api.slots.register()                         │  │
+│  │   → home_logo / home_footer / home_bottom /      │  │
+│  │     sidebar_title                                │  │
+│  │ v2  ctx.ui.slot() + ctx.keymap.layer()           │  │
+│  │   → home.footer(replace) / sidebar.footer(append)│  │
+│  ├─────────────────────────────────────────────────┤  │
+│  │ 命令（两代一致）                                  │  │
+│  │   → /zh        启用中文模式                       │  │
+│  │   → /zh-off    关闭中文模式                       │  │
+│  │   → /zh-cn     切换简体中文                       │  │
+│  │   → /zh-tw     切换繁體中文                       │  │
+│  │   → /zh-status 查看语言设置                       │  │
+│  └─────────────────────────────────────────────────┘  │
+│                                                        │
+│  Skill (skills/chinese-locale/SKILL.md)                │
+│  ┌─────────────────────────────────────────────────┐  │
+│  │ 中文交互规范（标点、术语、注释语言等）            │  │
+│  │ 安装到 ~/.config/opencode/skills/ 后              │  │
+│  │ agent 可按需加载作为行为参考                      │  │
+│  └─────────────────────────────────────────────────┘  │
+│                                                        │
+└───────────────────────────────────────────────────────┘
 ```
 
 ## 效果图
@@ -70,8 +74,8 @@ OpenCode 中文增强插件 — 通过官方 Plugin + Skill 机制实现 AI 回�
 
 | 表面 | 覆盖 | 说明 |
 |---|---|---|
-| AI 回复语言（含推理过程） | ✅ | system.transform 注入中文指令 |
-| TUI 插槽区域 | ✅ | home_logo / home_footer / home_bottom / sidebar_title |
+| AI 回复语言（含推理过程） | ✅ | v1 `system.transform` / v2 `session.hook` 注入中文指令 |
+| TUI 插槽区域 | ✅ | v1：home_logo / home_footer / home_bottom / sidebar_title；v2：home.footer / sidebar.footer |
 | TUI slash 命令 | ✅ | /zh 系列命令 |
 | TUI 硬编码字符串 | ❌ | 需上游 PR（#37434 被标 Not planned） |
 | Desktop (Electron) UI | ⚠️ | 配合 [opencode-zh-desktop](https://www.npmjs.com/package/opencode-zh-desktop) 使用 |
@@ -81,10 +85,11 @@ OpenCode 中文增强插件 — 通过官方 Plugin + Skill 机制实现 AI 回�
 
 | 项目 | 要求 |
 |---|---|
-| OpenCode | `>= 1.18.0` |
+| OpenCode v1 | `>= 1.18.0`（`engines.opencode`） |
+| OpenCode v2 | `>= 2.0.30`（已实测） |
 | Node.js | `>= 18.0.0`（推荐 `>= 20.0.0`） |
 
-> **注意**：本插件依赖 OpenCode 1.18.0 引入的 `experimental.chat.system.transform` hook，低版本无法生效。
+> **注意**：v1 依赖 OpenCode 1.18.0 引入的 `experimental.chat.system.transform` hook，低版本无法生效；v2 使用 `setup` + `session.hook`，无需该 experimental hook。
 
 ## 组合覆盖（配合 opencode-zh-desktop）
 
@@ -100,42 +105,65 @@ OpenCode 中文增强插件 — 通过官方 Plugin + Skill 机制实现 AI 回�
 
 ## 安装
 
-### 方式一：opencode plugin add（推荐）
-
-```bash
-opencode plugin add opencode-zh-plugin
-```
-
-### 方式二：手动配置 opencode.json
+### OpenCode v2（2.x）
 
 在 `~/.config/opencode/opencode.json`（全局）或项目目录 `opencode.json` 中添加：
 
 ```json
 {
-  "plugin": [
-    [
-      "opencode-zh-plugin",
-      {
-        "enabled": true,
-        "locale": "zh-CN",
-        "systemPrompt": true,
-        "tuiSlots": true,
-        "commands": true
-      }
-    ]
+  "$schema": "https://opencode.ai/config.json",
+  "plugins": [
+    { "package": "opencode-zh-plugin", "options": { "locale": "zh-CN" } }
   ]
 }
 ```
 
-### 方式三：从源码安装（本地开发）
+只要默认选项时可以简写为包名：
+
+```json
+{
+  "plugins": ["opencode-zh-plugin"]
+}
+```
+
+OpenCode 会从 npm 自动安装并加载，修改配置后重启生效。
+
+### OpenCode v1（1.x）
+
+```bash
+opencode plugin add opencode-zh-plugin
+```
+
+或手动配置：
+
+```json
+{
+  "plugin": [
+    ["opencode-zh-plugin", { "locale": "zh-CN" }]
+  ]
+}
+```
+
+> 两代配置键不同：v1 是 `plugin`（`[名称, 选项]` 元组数组），v2 是 `plugins`（字符串或 `{ package, options }` 数组）。v0.1.7 → v0.2.0 对 v1 用户完全向后兼容，无需改动配置。
+
+### 从源码安装（本地开发）
 
 ```bash
 git clone https://github.com/mike652638/opencode-zh-plugin.git
 cd opencode-zh-plugin
 bun install
+npm run build
 ```
 
-在 `opencode.json` 中使用 `file://` 引用：
+v2 用 `file:` 指到包根的**绝对路径**（宿主会按 `package.json` 的 exports 解析入口，因此必须指向包含 `package.json` 的目录，而不是单个文件）：
+
+```json
+{
+  "plugins": ["file:/absolute/path/to/opencode-zh-plugin"]
+}
+```
+
+v1 用 `file://` 相对路径：
 
 ```json
 {
@@ -178,49 +206,57 @@ cp -r skills/chinese-locale ~/.config/opencode/skills/
 将 `locale` 设为 `"zh-TW"` 即可启用繁體中文模式：
 
 ```json
-{
-  "plugin": [
-    ["opencode-zh-plugin", { "locale": "zh-TW" }]
-  ]
-}
+// v2
+{ "plugins": [{ "package": "opencode-zh-plugin", "options": { "locale": "zh-TW" } }] }
+```
+
+```json
+// v1
+{ "plugin": [["opencode-zh-plugin", { "locale": "zh-TW" }]] }
 ```
 
 ## 局限性
 
 1. **TUI 硬编码字符串无法覆盖**：OpenCode TUI 的原生错误提示、帮助文本等硬编码英文字符串没有字符串级 override 机制，只能通过上游 PR 修复
 2. **Desktop UI 需配套工具**：Electron 桌面应用的界面翻译需配合 [opencode-zh-desktop](https://www.npmjs.com/package/opencode-zh-desktop) 通过 CDP 注入方案实现
-3. **locale 切换需重启**：通过 `/zh-cn` / `/zh-tw` 命令切换后，TUI 界面立即更新，但 AI 回复语言的切换需要更新 `opencode.json` 并重启 OpenCode
-4. **不修改 OpenCode 源码**：本插件完全通过官方 Plugin API 工作，零侵入
+3. **locale 切换与 AI 回复语言**：v2 下 `/zh-cn` / `/zh-tw` 会立即重渲染 TUI 插槽；但 AI 回复语言来自插件启动时读取的配置，两代都需修改 `opencode.json` 并重启 OpenCode 才会影响 AI 输出
+4. **v2 插槽收敛**：v2 只有 `home.footer` 与 `sidebar.footer` 两个可插入位置，v1 的 `home_logo` / `home_footer` / `home_bottom` 合并为首页一块，`sidebar_title` 在 v2 没有对应插槽
+5. **不修改 OpenCode 源码**：本插件完全通过官方 Plugin API 工作，零侵入
 
 ## 项目结构
 
 ```
 opencode-zh-plugin/
-├── package.json              # npm 包配置（exports["./server"] + exports["./tui"]）
+├── package.json              # npm 包配置（exports["."] + ["./server"] + ["./tui"]）
 ├── tsconfig.json             # TypeScript 配置（SolidJS JSX）
 ├── src/
-│   ├── server.ts             # Server plugin 入口
-│   ├── tui.tsx               # TUI plugin 入口
+│   ├── index.ts              # v2 server plugin 入口（双形态 { id, setup, server }）
+│   ├── server.ts             # v1 server plugin 入口（server 函数）
+│   ├── tui.tsx               # TUI plugin 入口（双形态 { id, tui, setup }）
 │   ├── config.ts             # 插件选项 schema 与默认值
 │   ├── locale/
 │   │   └── strings.ts        # 中文字符串（简体 + 繁体）
 │   ├── server/
-│   │   └── system-transform.ts  # system.transform hook 实现
+│   │   └── system-transform.ts  # v1 system.transform + v2 session hook 实现
 │   └── tui/
-│       ├── slots.tsx         # TUI slot 替换组件
-│       └── commands.ts       # 中文 slash 命令
+│       ├── slots.tsx         # v1 TUI slot 替换组件
+│       ├── commands.ts       # v1 中文 slash 命令
+│       └── v2.tsx            # v2 TUI：slot / keymap layer / storage / toast
 ├── skills/
 │   └── chinese-locale/
 │       └── SKILL.md          # Skill 定义
 ├── examples/
-│   └── opencode.json         # 示例配置
+│   ├── opencode.json         # 示例配置（v1）
+│   └── opencode.v2.json      # 示例配置（v2）
 └── README.md
 ```
 
 ## 技术栈
 
-- **Server Plugin**：`experimental.chat.system.transform` hook — 每次对话时向 system prompt 注入中文指令
-- **TUI Plugin**：`api.slots.register()` + `api.command.register()` — 替换 TUI 插槽 + 注册命令
+- **Server Plugin（v1）**：`experimental.chat.system.transform` hook — 每次对话时向 system prompt 注入中文指令
+- **Server Plugin（v2）**：`setup` + `ctx.session.hook("context"|"compaction"|"generate"|"title")` — 覆盖所有携带 system prompt 的请求
+- **TUI Plugin（v1）**：`api.slots.register()` + `api.command.register()` — 替换 TUI 插槽 + 注册命令
+- **TUI Plugin（v2）**：`ctx.ui.slot()` + `ctx.keymap.layer()` + `ctx.storage.store()` + `ctx.ui.toast.show()`
 - **TUI 渲染**：`@opentui/solid` JSX（`<box>`, `<text>` 内禀元素）
 - **Skill**：Markdown 指令文件，agent 按需加载
 

@@ -1,6 +1,6 @@
 # Chinese Locale (中文语言环境)
 
-OpenCode 中文增强插件。通过 `experimental.chat.system.transform` hook 注入中文回复指令，让 AI 助手用中文进行所有用户可见的交流。
+OpenCode 中文增强插件。通过 v1 的 `experimental.chat.system.transform` hook（或 v2 的 `session.hook`）注入中文回复指令，让 AI 助手用中文进行所有用户可见的交流。
 
 ## 何时使用
 
@@ -36,6 +36,7 @@ OpenCode 中文增强插件。通过 `experimental.chat.system.transform` hook �
 在 `opencode.json` 中配置：
 
 ```json
+// OpenCode v1 (1.x)
 {
   "plugin": [
     ["opencode-zh-plugin", {
@@ -45,6 +46,15 @@ OpenCode 中文增强插件。通过 `experimental.chat.system.transform` hook �
       "tuiSlots": true,
       "commands": true
     }]
+  ]
+}
+```
+
+```json
+// OpenCode v2 (2.x)
+{
+  "plugins": [
+    { "package": "opencode-zh-plugin", "options": { "locale": "zh-CN" } }
   ]
 }
 ```
@@ -68,6 +78,7 @@ OpenCode 中文增强插件。通过 `experimental.chat.system.transform` hook �
 ## 局限性
 
 - 本插件通过 system prompt 注入实现 AI 回复中文化，不修改 OpenCode 源码
+- 支持 OpenCode v1（1.x）与 v2（2.x）
 - TUI 原生硬编码字符串（如错误提示、帮助文本）无法通过插件覆盖
 - Desktop (Electron) UI 不在本插件覆盖范围内
-- 切换 `locale` 需要更新 `opencode.json` 并重启 OpenCode 生效
+- 切换 `locale` 需要更新 `opencode.json` 并重启 OpenCode 生效（v2 下 TUI 插槽会随 `/zh-*` 命令立即更新，但 AI 回复语言仍需重启）
