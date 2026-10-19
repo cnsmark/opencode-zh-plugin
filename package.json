@@ -10,11 +10,22 @@
   },
   "homepage": "https://github.com/mike652638/opencode-zh-plugin#readme",
   "keywords": ["opencode", "plugin", "i18n", "chinese", "zh-CN", "zh-TW", "localization"],
-  "main": "./dist/server.js",
+  "main": "./dist/index.js",
   "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts",
+      "config": {
+        "enabled": true,
+        "locale": "zh-CN",
+        "systemPrompt": true,
+        "tuiSlots": true,
+        "commands": true
+      }
+    },
     "./server": {
-      "import": "./dist/server.js",
-      "types": "./dist/server.d.ts",
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts",
       "config": {
         "enabled": true,
         "locale": "zh-CN",
@@ -40,19 +51,33 @@
     "prepublishOnly": "npm run build"
   },
   "engines": {
-    "opencode": "^1.18.0"
+    "opencode": ">=1.18.0"
   },
   "devDependencies": {
-    "@opencode-ai/plugin": "^1.18.3",
-    "@opentui/solid": "^0.4.4",
+    "@opencode-ai/plugin": "^1.19.2",
+    "@opencode/plugin": "2.0.30",
+    "@opencode/theme": "2.0.30",
+    "@opentui/solid": "^0.5.17",
     "solid-js": "^1.9.0",
     "typescript": "^5.7.0"
   },
   "peerDependencies": {
-    "@opencode-ai/plugin": ">=1.18.0"
+    "@opencode-ai/plugin": ">=1.18.0",
+    "@opentui/core": ">=0.4.3",
+    "@opentui/solid": ">=0.4.3",
+    "solid-js": ">=1.9.0"
   },
   "peerDependenciesMeta": {
     "@opencode-ai/plugin": {
+      "optional": true
+    },
+    "@opentui/core": {
+      "optional": true
+    },
+    "@opentui/solid": {
+      "optional": true
+    },
+    "solid-js": {
       "optional": true
     }
   }

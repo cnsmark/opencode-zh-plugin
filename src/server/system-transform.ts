@@ -68,3 +68,30 @@ export function buildSystemTransformHandler(locale: ZhLocale) {
     output.system.unshift(directives[locale])
   }
 }
+
+/**
+ * OpenCode v2 (`@opencode/plugin`) shape of one system prompt part.
+ * Structurally compatible with `SystemPart` from `@opencode/ai`.
+ */
+export interface SystemTextPart {
+  type: "text"
+  text: string
+}
+
+/** OpenCode v2 session request event passed to the `context` hook. */
+export interface V2SessionContext {
+  system: SystemTextPart[]
+}
+
+/**
+ * v2 equivalent of {@link buildSystemTransformHandler}: the hook receives the
+ * (mutable) session request and prepends the language directive to `system`.
+ * Deduplicates exactly like the v1 handler so repeated continuations do not
+ * stack identical directives.
+ */
+export function buildV2SystemHook(locale: ZhLocale) {
+  return (event: V2SessionContext): void => {
+    if (event.system.some((part) => part.type === "text" && part.text.includes(TAG))) return
+    event.system.unshift({ type: "text", text: directives[locale] })
+  }
+}
